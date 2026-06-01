@@ -1,0 +1,21 @@
+.dropzone {
+  border: 2px dashed #4a90d9;
+  border-radius: 6px;
+  padding: 10px 20px;
+  cursor: pointer;
+  background: #f0f7ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 320px;
+  transition: background 0.15s;
+}
+
+.dropzone:hover {
+  background: #ddeeff;
+}
+
+.hint { color: #555; font-size: 14px; }
+.status { color: #888; font-size: 14px; }
+.success { color: #2a7a2a; font-size: 14px; font-weight: 600; }
+.error { color: #c0392b; font-size: 14px; }

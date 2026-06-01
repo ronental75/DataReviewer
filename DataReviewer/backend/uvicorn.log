@@ -1,0 +1,43 @@
+INFO:     Will watch for changes in these directories: ['C:\\Ronen\\samueli\\DataReviewer\\backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [35876] using WatchFiles
+INFO:     Started server process [40680]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:54395 - "GET /api/patients HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'main.py'. Reloading...
+ INFO:     Started server process [27672]
+INFO:     Waiting for application startup.
+ERROR:    Traceback (most recent call last):
+  File "C:\Users\ronen\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\routing.py", line 694, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+  File "C:\Users\ronen\AppData\Local\Programs\Python\Python310\lib\contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "C:\Users\ronen\AppData\Local\Programs\Python\Python310\lib\site-packages\fastapi\routing.py", line 216, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+  File "C:\Users\ronen\AppData\Local\Programs\Python\Python310\lib\contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "C:\Users\ronen\AppData\Local\Programs\Python\Python310\lib\site-packages\fastapi\routing.py", line 216, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+  File "C:\Users\ronen\AppData\Local\Programs\Python\Python310\lib\contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "C:\Users\ronen\AppData\Local\Programs\Python\Python310\lib\site-packages\fastapi\routing.py", line 216, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+  File "C:\Users\ronen\AppData\Local\Programs\Python\Python310\lib\contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "C:\Users\ronen\AppData\Local\Programs\Python\Python310\lib\site-packages\fastapi\routing.py", line 216, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+  File "C:\Users\ronen\AppData\Local\Programs\Python\Python310\lib\contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "C:\Ronen\samueli\DataReviewer\backend\main.py", line 11, in lifespan
+    init_schema()
+  File "C:\Ronen\samueli\DataReviewer\backend\database.py", line 18, in init_schema
+    conn = get_connection()
+  File "C:\Ronen\samueli\DataReviewer\backend\database.py", line 13, in get_connection
+    _conn = duckdb.connect(DB_PATH)
+_duckdb.IOException: IO Error: Cannot open file "C:\Ronen\samueli\DataReviewer\backend\data\pathology.duckdb": The process cannot access the file because it is being used by another process.
+
+File is already open in 
+C:\Users\ronen\AppData\Local\Programs\Python\Python310\python.exe (PID 32644)
+
+ERROR:    Application startup failed. Exiting.

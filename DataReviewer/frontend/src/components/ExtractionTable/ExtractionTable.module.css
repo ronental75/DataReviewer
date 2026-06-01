@@ -1,0 +1,139 @@
+.container {
+  border-top: 2px solid #d0d8f0;
+  padding: 14px 20px 20px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.actions { display: flex; gap: 8px; align-items: center; }
+
+.addBtn {
+  background: #f0f7ff;
+  border: 1px solid #4a90d9;
+  color: #2c6fad;
+  padding: 5px 12px;
+  border-radius: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.addBtn:hover { background: #ddeeff; }
+
+.saveBtn {
+  background: #27ae60;
+  color: white;
+  border: none;
+  padding: 5px 14px;
+  border-radius: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.saveBtn:disabled { opacity: 0.5; cursor: default; }
+.saveBtn:not(:disabled):hover { background: #1e8449; }
+
+.empty {
+  color: #aaa;
+  font-size: 13px;
+  padding: 12px 0;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 400px;
+}
+
+.th {
+  padding: 8px 10px;
+  background: #eef2fb;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  color: #2c4a8c;
+  border: 1px solid #d4ddf5;
+  white-space: nowrap;
+  position: relative;
+}
+
+.th span { margin-right: 18px; }
+
+.deleteFieldBtn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px;
+}
+
+.deleteFieldBtn:hover { color: #c0392b; }
+
+.td {
+  padding: 4px;
+  border: 1px solid #e0e8f0;
+}
+
+.cellInput {
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  outline: none;
+  padding: 6px 8px;
+  font-size: 13px;
+  background: transparent;
+  color: #222;
+}
+
+.cellInput:focus { background: #f8fbff; }
+.cellInput:disabled { color: #ccc; }
+
+.cellSelect {
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  outline: none;
+  padding: 6px 4px;
+  font-size: 13px;
+  background: transparent;
+  color: #222;
+  cursor: pointer;
+}
+
+.cellSelect:disabled { color: #ccc; cursor: default; }
+.cellSelect:focus { background: #f8fbff; }
+
+.typeBadge {
+  font-size: 10px;
+  font-weight: 600;
+  background: #ddf0dd;
+  color: #1a6b1a;
+  border-radius: 8px;
+  padding: 1px 6px;
+  margin-right: 18px;
+  vertical-align: middle;
+}

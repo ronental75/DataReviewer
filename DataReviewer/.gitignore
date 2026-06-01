@@ -1,0 +1,21 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/routers/__pycache__/
+backend/services/__pycache__/
+__pycache__/
+*.pyc
+
+# Database (contains patient data — never commit)
+backend/data/
+*.duckdb
+*.duckdb.wal
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# OS
+.DS_Store
+Thumbs.db

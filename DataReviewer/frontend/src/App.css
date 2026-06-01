@@ -1,0 +1,93 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f4f6fb;
+  color: #222;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 20px;
+  background: #1a2a5e;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.logo {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: #d0e4ff;
+}
+
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: white;
+  border-right: 1px solid #dde3f0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-panel {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.report-section {
+  flex: 1 0 auto;
+  background: white;
+  margin: 12px 12px 6px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  overflow: hidden;
+}
+
+.extraction-section {
+  flex-shrink: 0;
+  background: white;
+  margin: 0 12px 12px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+.welcome {
+  padding: 60px 40px;
+  color: #666;
+}
+
+.welcome h2 {
+  color: #1a2a5e;
+  margin-bottom: 12px;
+}
+
+.welcome code {
+  background: #eef2ff;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 13px;
+}
