@@ -7,6 +7,14 @@ class UploadResponse(BaseModel):
     rows_imported: int
     patients_found: int
     filename: str
+    batch_id: int
+
+
+class ImportBatch(BaseModel):
+    id: int
+    filename: str
+    uploaded_at: str
+    record_count: int
 
 
 class PatientSummary(BaseModel):

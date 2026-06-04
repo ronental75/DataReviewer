@@ -1,3 +1,18 @@
+export interface ImportBatch {
+  id: number;
+  filename: string;
+  uploaded_at: string;
+  record_count: number;
+}
+
+export interface UploadResponse {
+  status: string;
+  rows_imported: number;
+  patients_found: number;
+  filename: string;
+  batch_id: number;
+}
+
 export interface PatientSummary {
   patient_id: string;
   visit_count: number;
@@ -32,11 +47,4 @@ export interface ExtractionValues {
   patient_id: string;
   report_date: string;
   values: Record<string, string>;
-}
-
-export interface UploadResponse {
-  status: string;
-  rows_imported: number;
-  patients_found: number;
-  filename: string;
 }

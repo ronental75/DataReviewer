@@ -1,15 +1,17 @@
 /**
  * Global Zustand store.
  *
- * loadPatients() is intentionally kept simple — it only fetches data and
- * updates the store.  Auto-selection of the first patient and first visit
- * is handled by useEffect hooks in App.tsx, which react to store changes
- * and can fire independently without causing cascading async failures.
+ * loadPatients() fetches patients filtered by the current selectedBatchId.
+ * selectBatch() switches the active batch, resets patient/visit state, and
+ * reloads patients for the new batch.  Auto-selection of the first patient
+ * and first visit is handled by useEffect hooks in App.tsx.
  */
 
 import { create } from 'zustand';
-import type { PatientSummary, VisitSummary, Segment, ExtractionField } from '../types';
+import type { ImportBatch, PatientSummary, VisitSummary, Segment, ExtractionField } from '../types';
 import {
+  fetchLoads,
+  deleteLoad as apiDeleteLoad,
   fetchPatients,
   fetchVisits,
   fetchReport,
@@ -31,7 +33,12 @@ interface AppState {
   currentValues: Record<string, string>;
   saving: boolean;
   loadingReport: boolean;
+  loads: ImportBatch[];
+  selectedBatchId: number | null;
 
+  loadLoads: () => Promise<void>;
+  selectBatch: (batchId: number | null) => Promise<void>;
+  deleteBatch: (batchId: number) => Promise<void>;
   loadPatients: () => Promise<void>;
   selectPatient: (id: string) => Promise<void>;
   selectVisit: (patientId: string, date: string) => Promise<void>;
@@ -53,15 +60,50 @@ export const useAppStore = create<AppState>((set, get) => ({
   currentValues: {},
   saving: false,
   loadingReport: false,
+  loads: [],
+  selectedBatchId: null,
+
+  loadLoads: async () => {
+    const loads = await fetchLoads();
+    set({ loads });
+  },
+
+  selectBatch: async (batchId: number | null) => {
+    set({
+      selectedBatchId: batchId,
+      selectedPatientId: null,
+      selectedReportDate: null,
+      currentSegments: [],
+      currentValues: {},
+      patients: [],
+      visitsByPatient: {},
+      dataLoaded: false,
+    });
+    const patients = await fetchPatients(batchId ?? undefined);
+    set({ patients, dataLoaded: patients.length > 0 });
+  },
+
+  deleteBatch: async (batchId: number) => {
+    await apiDeleteLoad(batchId);
+    set((s) => ({ loads: s.loads.filter((l) => l.id !== batchId) }));
+    if (get().selectedBatchId === batchId) {
+      await get().selectBatch(null);
+    }
+  },
 
   loadPatients: async () => {
-    const [patients, fields] = await Promise.all([fetchPatients(), fetchFields()]);
+    const { selectedBatchId } = get();
+    const [patients, fields] = await Promise.all([
+      fetchPatients(selectedBatchId ?? undefined),
+      fetchFields(),
+    ]);
     set({ patients, fields, dataLoaded: patients.length > 0 });
   },
 
   selectPatient: async (id: string) => {
+    const { selectedBatchId } = get();
     set({ selectedPatientId: id, selectedReportDate: null, currentSegments: [], currentValues: {} });
-    const visits = await fetchVisits(id);
+    const visits = await fetchVisits(id, selectedBatchId ?? undefined);
     set((s) => ({ visitsByPatient: { ...s.visitsByPatient, [id]: visits } }));
   },
 
@@ -79,13 +121,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   saveCurrentValues: async () => {
-    const { selectedPatientId, selectedReportDate, currentValues } = get();
+    const { selectedPatientId, selectedReportDate, currentValues, selectedBatchId } = get();
     if (!selectedPatientId || !selectedReportDate) return;
     set({ saving: true });
     await saveExtraction(selectedPatientId, selectedReportDate, currentValues);
     set({ saving: false });
-    // Refresh visit list so has_extraction indicator updates
-    const visits = await fetchVisits(selectedPatientId);
+    const visits = await fetchVisits(selectedPatientId, selectedBatchId ?? undefined);
     set((s) => ({ visitsByPatient: { ...s.visitsByPatient, [selectedPatientId]: visits } }));
   },
 
@@ -100,7 +141,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   refreshVisits: async (patientId: string) => {
-    const visits = await fetchVisits(patientId);
+    const { selectedBatchId } = get();
+    const visits = await fetchVisits(patientId, selectedBatchId ?? undefined);
     set((s) => ({ visitsByPatient: { ...s.visitsByPatient, [patientId]: visits } }));
   },
 }));

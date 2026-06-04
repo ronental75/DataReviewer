@@ -16,7 +16,7 @@ import duckdb
 DB_PATH = os.path.join(os.path.dirname(__file__), "data", "pathology.duckdb")
 
 _conn: Optional[duckdb.DuckDBPyConnection] = None
-_lock = threading.Lock()
+_lock = threading.RLock()
 
 
 def get_connection() -> duckdb.DuckDBPyConnection:
@@ -63,12 +63,18 @@ def init_schema() -> None:
             created_at    TIMESTAMP DEFAULT now()
         )
     """)
-    # Prevents duplicate segments when the same CSV is re-uploaded
-    conn.execute("""
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_reports_unique
-            ON pathology_reports (patient_id, report_date, COALESCE(segment_label, ''))
-    """)
     conn.execute("CREATE SEQUENCE IF NOT EXISTS seq_reports START 1")
+
+    # Each CSV upload is stored as a separate named batch
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS import_batches (
+            id           INTEGER PRIMARY KEY,
+            filename     VARCHAR NOT NULL,
+            uploaded_at  TIMESTAMP DEFAULT now(),
+            record_count INTEGER DEFAULT 0
+        )
+    """)
+    conn.execute("CREATE SEQUENCE IF NOT EXISTS seq_batches START 1")
 
     # Doctor-defined fields to extract (name, display order, type, options)
     conn.execute("""
@@ -109,3 +115,53 @@ def init_schema() -> None:
             ON extracted_data (patient_id, report_date, field_name)
     """)
     conn.execute("CREATE SEQUENCE IF NOT EXISTS seq_extracted START 1")
+
+    # Migration: add batch_id column to pathology_reports
+    try:
+        conn.execute("ALTER TABLE pathology_reports ADD COLUMN batch_id INTEGER")
+    except Exception:
+        pass  # column already exists
+
+    # Migration: update unique index to include batch_id so different batches
+    # can contain the same patient/date/segment without colliding
+    try:
+        conn.execute("DROP INDEX IF EXISTS idx_reports_unique")
+    except Exception:
+        pass
+    try:
+        conn.execute("""
+            CREATE UNIQUE INDEX idx_reports_unique
+                ON pathology_reports (
+                    COALESCE(batch_id, 0),
+                    patient_id,
+                    report_date,
+                    COALESCE(segment_label, '')
+                )
+        """)
+    except Exception:
+        pass  # index already updated
+
+    # Migration: assign pre-batch records (batch_id IS NULL) to a legacy batch
+    try:
+        orphan_count = conn.execute(
+            "SELECT COUNT(*) FROM pathology_reports WHERE batch_id IS NULL"
+        ).fetchone()[0]
+        if orphan_count > 0:
+            legacy = conn.execute(
+                "SELECT id FROM import_batches WHERE filename = 'Legacy Data'"
+            ).fetchone()
+            if legacy:
+                legacy_id = legacy[0]
+            else:
+                conn.execute(
+                    "INSERT INTO import_batches (id, filename, record_count) "
+                    "VALUES (nextval('seq_batches'), 'Legacy Data', ?)",
+                    [orphan_count],
+                )
+                legacy_id = conn.execute("SELECT currval('seq_batches')").fetchone()[0]
+            conn.execute(
+                "UPDATE pathology_reports SET batch_id = ? WHERE batch_id IS NULL",
+                [legacy_id],
+            )
+    except Exception:
+        pass

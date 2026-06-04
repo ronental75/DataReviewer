@@ -3,6 +3,7 @@ import { FileUpload } from './components/FileUpload/FileUpload';
 import { PatientList } from './components/PatientList/PatientList';
 import { ReportViewer } from './components/ReportViewer/ReportViewer';
 import { ExtractionTable } from './components/ExtractionTable/ExtractionTable';
+import { LoadSelector } from './components/LoadSelector/LoadSelector';
 import { useAppStore } from './store/appStore';
 import './App.css';
 
@@ -48,6 +49,7 @@ export default function App() {
 
       <div className="layout">
         <aside className="sidebar">
+          <LoadSelector />
           <PatientList />
         </aside>
 

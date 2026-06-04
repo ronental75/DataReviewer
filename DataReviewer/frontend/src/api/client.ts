@@ -8,6 +8,7 @@
 
 import axios from 'axios';
 import type {
+  ImportBatch,
   PatientSummary,
   VisitSummary,
   ReportResponse,
@@ -24,11 +25,25 @@ export const uploadCsv = (file: File): Promise<UploadResponse> => {
   return api.post<UploadResponse>('/upload', form).then((r) => r.data);
 };
 
-export const fetchPatients = (): Promise<PatientSummary[]> =>
-  api.get<PatientSummary[]>('/patients').then((r) => r.data);
+export const fetchLoads = (): Promise<ImportBatch[]> =>
+  api.get<ImportBatch[]>('/loads').then((r) => r.data);
 
-export const fetchVisits = (patientId: string): Promise<VisitSummary[]> =>
-  api.get<VisitSummary[]>(`/patients/${encodeURIComponent(patientId)}/visits`).then((r) => r.data);
+export const deleteLoad = (batchId: number): Promise<void> =>
+  api.delete(`/loads/${batchId}`).then(() => undefined);
+
+export const fetchPatients = (batchId?: number): Promise<PatientSummary[]> =>
+  api
+    .get<PatientSummary[]>('/patients', {
+      params: batchId != null ? { batch_id: batchId } : {},
+    })
+    .then((r) => r.data);
+
+export const fetchVisits = (patientId: string, batchId?: number): Promise<VisitSummary[]> =>
+  api
+    .get<VisitSummary[]>(`/patients/${encodeURIComponent(patientId)}/visits`, {
+      params: batchId != null ? { batch_id: batchId } : {},
+    })
+    .then((r) => r.data);
 
 export const fetchReport = (patientId: string, reportDate: string): Promise<ReportResponse> =>
   api
@@ -38,8 +53,14 @@ export const fetchReport = (patientId: string, reportDate: string): Promise<Repo
 export const fetchFields = (): Promise<ExtractionField[]> =>
   api.get<ExtractionField[]>('/fields').then((r) => r.data);
 
-export const addField = (fieldName: string, fieldType: 'text' | 'select' = 'text', options: string[] = []): Promise<ExtractionField> =>
-  api.post<ExtractionField>('/fields', { field_name: fieldName, field_type: fieldType, options }).then((r) => r.data);
+export const addField = (
+  fieldName: string,
+  fieldType: 'text' | 'select' = 'text',
+  options: string[] = []
+): Promise<ExtractionField> =>
+  api
+    .post<ExtractionField>('/fields', { field_name: fieldName, field_type: fieldType, options })
+    .then((r) => r.data);
 
 export const deleteField = (fieldName: string): Promise<void> =>
   api.delete(`/fields/${encodeURIComponent(fieldName)}`).then(() => undefined);

@@ -9,7 +9,7 @@ export function FileUpload() {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const loadPatients = useAppStore((s) => s.loadPatients);
+  const { loadLoads, selectBatch } = useAppStore();
 
   const handleFile = async (file: File) => {
     setUploading(true);
@@ -18,7 +18,8 @@ export function FileUpload() {
     try {
       const res = await uploadCsv(file);
       setResult(res);
-      await loadPatients();
+      await loadLoads();
+      await selectBatch(res.batch_id);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Upload failed';
       setError(msg);

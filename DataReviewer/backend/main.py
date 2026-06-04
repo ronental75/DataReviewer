@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from database import init_schema
-from routers import upload, patients, reports, extraction
+from routers import upload, patients, reports, extraction, loads
 
 
 @asynccontextmanager
@@ -32,3 +32,4 @@ app.include_router(upload.router, prefix="/api")
 app.include_router(patients.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
 app.include_router(extraction.router, prefix="/api")
+app.include_router(loads.router, prefix="/api")
