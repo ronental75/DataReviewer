@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import axios from 'axios';
 import { uploadCsv } from '../../api/client';
 import { useAppStore } from '../../store/appStore';
 import type { UploadResponse } from '../../types';
@@ -21,7 +22,12 @@ export function FileUpload() {
       await loadLoads();
       await selectBatch(res.batch_id);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Upload failed';
+      let msg = 'Upload failed';
+      if (axios.isAxiosError(e)) {
+        msg = e.response?.data?.detail ?? e.message;
+      } else if (e instanceof Error) {
+        msg = e.message;
+      }
       setError(msg);
     } finally {
       setUploading(false);
