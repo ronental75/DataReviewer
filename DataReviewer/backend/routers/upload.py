@@ -7,7 +7,7 @@ Re-uploading the same file is safe: existing rows are replaced.
 """
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from database import get_connection
+from database import get_db
 from models import UploadResponse
 from services.csv_parser import parse_csv
 
@@ -25,28 +25,26 @@ async def upload_csv(file: UploadFile = File(...)):
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
-    conn = get_connection()
+    with get_db() as conn:
+        for r in records:
+            conn.execute(
+                """
+                DELETE FROM pathology_reports
+                WHERE patient_id = ? AND report_date = ? AND COALESCE(segment_label, '') = COALESCE(?, '')
+                """,
+                [r["patient_id"], r["report_date"], r["segment_label"]],
+            )
+            conn.execute(
+                """
+                INSERT INTO pathology_reports (id, patient_id, report_date, segment_label, text_content, import_batch)
+                VALUES (nextval('seq_reports'), ?, ?, ?, ?, ?)
+                """,
+                [r["patient_id"], r["report_date"], r["segment_label"], r["text_content"], r["import_batch"]],
+            )
 
-    # Upsert each record using DELETE + INSERT (DuckDB safe approach)
-    for r in records:
-        conn.execute(
-            """
-            DELETE FROM pathology_reports
-            WHERE patient_id = ? AND report_date = ? AND COALESCE(segment_label, '') = COALESCE(?, '')
-            """,
-            [r["patient_id"], r["report_date"], r["segment_label"]],
-        )
-        conn.execute(
-            """
-            INSERT INTO pathology_reports (id, patient_id, report_date, segment_label, text_content, import_batch)
-            VALUES (nextval('seq_reports'), ?, ?, ?, ?, ?)
-            """,
-            [r["patient_id"], r["report_date"], r["segment_label"], r["text_content"], r["import_batch"]],
-        )
-
-    patients_count = conn.execute(
-        "SELECT COUNT(DISTINCT patient_id) FROM pathology_reports"
-    ).fetchone()[0]
+        patients_count = conn.execute(
+            "SELECT COUNT(DISTINCT patient_id) FROM pathology_reports"
+        ).fetchone()[0]
 
     return UploadResponse(
         status="ok",

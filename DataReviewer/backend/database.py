@@ -8,11 +8,14 @@ If the WAL file is corrupt, it is removed and the connection retried.
 """
 
 import os
+import threading
+from contextlib import contextmanager
 import duckdb
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "data", "pathology.duckdb")
 
 _conn: duckdb.DuckDBPyConnection | None = None
+_lock = threading.Lock()
 
 
 def get_connection() -> duckdb.DuckDBPyConnection:
@@ -30,6 +33,13 @@ def get_connection() -> duckdb.DuckDBPyConnection:
                 os.remove(wal)
             _conn = duckdb.connect(DB_PATH)
     return _conn
+
+
+@contextmanager
+def get_db():
+    """Yield the shared connection under a lock so concurrent requests don't interleave."""
+    with _lock:
+        yield get_connection()
 
 
 def init_schema() -> None:

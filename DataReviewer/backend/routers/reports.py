@@ -8,7 +8,7 @@ preserved after URL-decoding.
 """
 
 from fastapi import APIRouter, HTTPException
-from database import get_connection
+from database import get_db
 from models import ReportResponse, Segment
 
 router = APIRouter()
@@ -30,12 +30,12 @@ def _segment_sort_key(label: str | None) -> int:
 
 @router.get("/reports/{patient_id}/{report_date:path}", response_model=ReportResponse)
 def get_report(patient_id: str, report_date: str):
-    conn = get_connection()
-    rows = conn.execute("""
-        SELECT segment_label, text_content
-        FROM pathology_reports
-        WHERE patient_id = ? AND report_date = ?
-    """, [patient_id, report_date]).fetchall()
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT segment_label, text_content
+            FROM pathology_reports
+            WHERE patient_id = ? AND report_date = ?
+        """, [patient_id, report_date]).fetchall()
 
     if not rows:
         raise HTTPException(status_code=404, detail="Report not found")
