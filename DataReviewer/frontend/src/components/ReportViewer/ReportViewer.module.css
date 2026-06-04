@@ -51,6 +51,10 @@
   font-size: 14px;
   line-height: 1.65;
   color: #222;
-  white-space: pre-wrap;
   word-break: break-word;
+}
+
+.textLine {
+  margin: 0;
+  padding: 0;
 }

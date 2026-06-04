@@ -1,5 +1,5 @@
 import { useAppStore } from '../../store/appStore';
-import { hasHebrew } from '../../utils/rtl';
+import { splitByLanguage } from '../../utils/rtl';
 import styles from './ReportViewer.module.css';
 
 const LABEL_COLORS: Record<string, string> = {
@@ -36,18 +36,23 @@ export function ReportViewer() {
       {currentSegments.map((seg, i) => {
         const label = seg.segment_label ?? 'Note';
         const color = LABEL_COLORS[label] ?? '#444';
-        const isRtl = hasHebrew(seg.text_content);
+        const chunks = splitByLanguage(seg.text_content);
         return (
           <div key={i} className={styles.segment}>
             <div className={styles.segmentLabel} style={{ color }}>
               {label}
             </div>
-            <div
-              className={styles.segmentText}
-              dir="auto"
-              style={{ textAlign: isRtl ? 'right' : 'left' }}
-            >
-              {seg.text_content}
+            <div className={styles.segmentText}>
+              {chunks.map((chunk, j) => (
+                <p
+                  key={j}
+                  dir={chunk.isHebrew ? 'rtl' : 'ltr'}
+                  className={styles.textLine}
+                  style={{ textAlign: chunk.isHebrew ? 'right' : 'left' }}
+                >
+                  {chunk.text}
+                </p>
+              ))}
             </div>
           </div>
         );
