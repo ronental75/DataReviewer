@@ -10,11 +10,12 @@ If the WAL file is corrupt, it is removed and the connection retried.
 import os
 import threading
 from contextlib import contextmanager
+from typing import Optional
 import duckdb
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "data", "pathology.duckdb")
 
-_conn: duckdb.DuckDBPyConnection | None = None
+_conn: Optional[duckdb.DuckDBPyConnection] = None
 _lock = threading.Lock()
 
 

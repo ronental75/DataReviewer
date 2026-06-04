@@ -7,6 +7,7 @@ The report_date path parameter uses :path so slashes and spaces are
 preserved after URL-decoding.
 """
 
+from typing import Optional
 from fastapi import APIRouter, HTTPException
 from database import get_db
 from models import ReportResponse, Segment
@@ -22,7 +23,7 @@ SEGMENT_ORDER = [
 ]
 
 
-def _segment_sort_key(label: str | None) -> int:
+def _segment_sort_key(label: Optional[str]) -> int:
     if label in SEGMENT_ORDER:
         return SEGMENT_ORDER.index(label)
     return len(SEGMENT_ORDER)
