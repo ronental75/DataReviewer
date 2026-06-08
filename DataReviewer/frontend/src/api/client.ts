@@ -15,6 +15,7 @@ import type {
   ExtractionField,
   ExtractionValues,
   UploadResponse,
+  BatchConfig,
 } from '../types';
 
 const api = axios.create({ baseURL: 'http://127.0.0.1:8000/api' });
@@ -30,6 +31,22 @@ export const fetchLoads = (): Promise<ImportBatch[]> =>
 
 export const deleteLoad = (batchId: number): Promise<void> =>
   api.delete(`/loads/${batchId}`).then(() => undefined);
+
+export const fetchBatchColumns = (batchId: number): Promise<string[]> =>
+  api.get<string[]>(`/loads/${batchId}/columns`).then((r) => r.data);
+
+export const fetchBatchConfig = (batchId: number): Promise<BatchConfig> =>
+  api
+    .get<{ sidebar_cols: string[]; text_cols: string[] }>(`/loads/${batchId}/config`)
+    .then((r) => ({ sidebarCols: r.data.sidebar_cols, textCols: r.data.text_cols }));
+
+export const saveBatchConfig = (batchId: number, config: BatchConfig): Promise<void> =>
+  api
+    .post(`/loads/${batchId}/config`, {
+      sidebar_cols: config.sidebarCols,
+      text_cols: config.textCols,
+    })
+    .then(() => undefined);
 
 export const fetchPatients = (batchId?: number): Promise<PatientSummary[]> =>
   api

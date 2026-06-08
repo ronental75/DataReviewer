@@ -1,5 +1,6 @@
 import { useAppStore } from '../../store/appStore';
 import { getExportUrl } from '../../api/client';
+import { ColumnConfigButton } from '../ColumnConfig/ColumnConfig';
 import styles from './PatientList.module.css';
 
 function truncateId(id: string) {
@@ -13,6 +14,7 @@ export function PatientList() {
     selectedReportDate,
     visitsByPatient,
     dataLoaded,
+    batchConfig,
     selectPatient,
     selectVisit,
   } = useAppStore();
@@ -21,9 +23,14 @@ export function PatientList() {
     return <div className={styles.empty}>Upload a CSV to begin</div>;
   }
 
+  const sidebarCols = batchConfig?.sidebarCols ?? [];
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>Patients ({patients.length})</div>
+
+      <ColumnConfigButton />
+
       <ul className={styles.list}>
         {patients.map((p) => {
           const isExpanded = selectedPatientId === p.patient_id;
@@ -52,6 +59,20 @@ export function PatientList() {
                         <span>{v.report_date}</span>
                         <span className={styles.segCount}>{v.segment_count} seg.</span>
                       </button>
+                      {sidebarCols.length > 0 && v.extra_data && (
+                        <div className={styles.extraData}>
+                          {sidebarCols.map((col) => {
+                            const val = v.extra_data[col];
+                            if (!val) return null;
+                            return (
+                              <span key={col} className={styles.extraChip} title={col}>
+                                <span className={styles.extraKey}>{col.split('.').pop()}:</span>
+                                {val.length > 20 ? val.slice(0, 20) + '…' : val}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>

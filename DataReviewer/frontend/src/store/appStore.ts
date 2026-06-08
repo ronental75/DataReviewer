@@ -1,14 +1,5 @@
-/**
- * Global Zustand store.
- *
- * loadPatients() fetches patients filtered by the current selectedBatchId.
- * selectBatch() switches the active batch, resets patient/visit state, and
- * reloads patients for the new batch.  Auto-selection of the first patient
- * and first visit is handled by useEffect hooks in App.tsx.
- */
-
 import { create } from 'zustand';
-import type { ImportBatch, PatientSummary, VisitSummary, Segment, ExtractionField } from '../types';
+import type { ImportBatch, PatientSummary, VisitSummary, Segment, ExtractionField, BatchConfig } from '../types';
 import {
   fetchLoads,
   deleteLoad as apiDeleteLoad,
@@ -20,6 +11,9 @@ import {
   saveExtraction,
   addField as apiAddField,
   deleteField as apiDeleteField,
+  fetchBatchColumns,
+  fetchBatchConfig,
+  saveBatchConfig as apiSaveBatchConfig,
 } from '../api/client';
 
 interface AppState {
@@ -29,12 +23,15 @@ interface AppState {
   patients: PatientSummary[];
   visitsByPatient: Record<string, VisitSummary[]>;
   currentSegments: Segment[];
+  currentExtraData: Record<string, string>;
   fields: ExtractionField[];
   currentValues: Record<string, string>;
   saving: boolean;
   loadingReport: boolean;
   loads: ImportBatch[];
   selectedBatchId: number | null;
+  batchColumns: string[];
+  batchConfig: BatchConfig | null;
 
   loadLoads: () => Promise<void>;
   selectBatch: (batchId: number | null) => Promise<void>;
@@ -47,6 +44,7 @@ interface AppState {
   addField: (name: string, fieldType?: 'text' | 'select', options?: string[]) => Promise<void>;
   deleteField: (name: string) => Promise<void>;
   refreshVisits: (patientId: string) => Promise<void>;
+  saveBatchConfig: (config: BatchConfig) => Promise<void>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -56,12 +54,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   patients: [],
   visitsByPatient: {},
   currentSegments: [],
+  currentExtraData: {},
   fields: [],
   currentValues: {},
   saving: false,
   loadingReport: false,
   loads: [],
   selectedBatchId: null,
+  batchColumns: [],
+  batchConfig: null,
 
   loadLoads: async () => {
     const loads = await fetchLoads();
@@ -74,13 +75,25 @@ export const useAppStore = create<AppState>((set, get) => ({
       selectedPatientId: null,
       selectedReportDate: null,
       currentSegments: [],
+      currentExtraData: {},
       currentValues: {},
       patients: [],
       visitsByPatient: {},
       dataLoaded: false,
+      batchColumns: [],
+      batchConfig: null,
     });
-    const patients = await fetchPatients(batchId ?? undefined);
+
+    const [patients] = await Promise.all([fetchPatients(batchId ?? undefined)]);
     set({ patients, dataLoaded: patients.length > 0 });
+
+    if (batchId != null) {
+      const [columns, config] = await Promise.all([
+        fetchBatchColumns(batchId),
+        fetchBatchConfig(batchId),
+      ]);
+      set({ batchColumns: columns, batchConfig: config });
+    }
   },
 
   deleteBatch: async (batchId: number) => {
@@ -98,11 +111,19 @@ export const useAppStore = create<AppState>((set, get) => ({
       fetchFields(),
     ]);
     set({ patients, fields, dataLoaded: patients.length > 0 });
+
+    if (selectedBatchId != null) {
+      const [columns, config] = await Promise.all([
+        fetchBatchColumns(selectedBatchId),
+        fetchBatchConfig(selectedBatchId),
+      ]);
+      set({ batchColumns: columns, batchConfig: config });
+    }
   },
 
   selectPatient: async (id: string) => {
     const { selectedBatchId } = get();
-    set({ selectedPatientId: id, selectedReportDate: null, currentSegments: [], currentValues: {} });
+    set({ selectedPatientId: id, selectedReportDate: null, currentSegments: [], currentExtraData: {}, currentValues: {} });
     const visits = await fetchVisits(id, selectedBatchId ?? undefined);
     set((s) => ({ visitsByPatient: { ...s.visitsByPatient, [id]: visits } }));
   },
@@ -113,7 +134,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       fetchReport(patientId, date),
       fetchExtraction(patientId, date),
     ]);
-    set({ currentSegments: report.segments, currentValues: extraction.values, loadingReport: false });
+    set({
+      currentSegments: report.segments,
+      currentExtraData: report.extra_data ?? {},
+      currentValues: extraction.values,
+      loadingReport: false,
+    });
   },
 
   updateFieldValue: (fieldName: string, value: string) => {
@@ -144,5 +170,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { selectedBatchId } = get();
     const visits = await fetchVisits(patientId, selectedBatchId ?? undefined);
     set((s) => ({ visitsByPatient: { ...s.visitsByPatient, [patientId]: visits } }));
+  },
+
+  saveBatchConfig: async (config: BatchConfig) => {
+    const { selectedBatchId } = get();
+    if (selectedBatchId == null) return;
+    await apiSaveBatchConfig(selectedBatchId, config);
+    set({ batchConfig: config });
   },
 }));

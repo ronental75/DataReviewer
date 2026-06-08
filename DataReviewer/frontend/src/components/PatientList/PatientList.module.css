@@ -98,6 +98,32 @@
   color: #aaa;
 }
 
+.extraData {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 2px 10px 6px 22px;
+}
+
+.extraChip {
+  font-size: 10px;
+  background: #eef2ff;
+  border: 1px solid #c8d4f0;
+  color: #334;
+  border-radius: 4px;
+  padding: 1px 5px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.extraKey {
+  font-weight: 700;
+  color: #2c6fad;
+  margin-right: 2px;
+}
+
 .footer {
   padding: 10px 14px;
   border-top: 1px solid #e0e0e0;

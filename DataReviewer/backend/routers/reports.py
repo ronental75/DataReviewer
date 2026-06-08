@@ -7,6 +7,7 @@ The report_date path parameter uses :path so slashes and spaces are
 preserved after URL-decoding.
 """
 
+import json
 from typing import Optional
 from fastapi import APIRouter, HTTPException
 from database import get_db
@@ -33,7 +34,7 @@ def _segment_sort_key(label: Optional[str]) -> int:
 def get_report(patient_id: str, report_date: str):
     with get_db() as conn:
         rows = conn.execute("""
-            SELECT segment_label, text_content
+            SELECT segment_label, text_content, extra_data
             FROM pathology_reports
             WHERE patient_id = ? AND report_date = ?
         """, [patient_id, report_date]).fetchall()
@@ -45,4 +46,15 @@ def get_report(patient_id: str, report_date: str):
         [Segment(segment_label=r[0], text_content=r[1]) for r in rows],
         key=lambda s: _segment_sort_key(s.segment_label),
     )
-    return ReportResponse(patient_id=patient_id, report_date=report_date, segments=segments)
+
+    try:
+        extra_data = json.loads(rows[0][2]) if rows[0][2] else {}
+    except Exception:
+        extra_data = {}
+
+    return ReportResponse(
+        patient_id=patient_id,
+        report_date=report_date,
+        segments=segments,
+        extra_data=extra_data,
+    )

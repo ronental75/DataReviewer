@@ -4,47 +4,52 @@ const LATIN_CHAR = /[A-Za-z]/;
 export type TextChunk = { text: string; isHebrew: boolean };
 
 /**
- * Strip <tag> patterns, split text on newlines, then group consecutive
- * words by script so each language run becomes its own chunk.
- * Neutral tokens (numbers, punctuation) inherit the previous run's language.
+ * Split a single paragraph's text into language-direction runs.
+ * Neutral tokens (numbers, punctuation) inherit the previous run's direction.
  */
-export function splitByLanguage(raw: string): TextChunk[] {
-  const cleaned = raw.replace(/<[^>]+>/g, '').trim();
+function splitParagraphByLanguage(text: string): TextChunk[] {
   const result: TextChunk[] = [];
+  const tokens = text.match(/\S+\s*/g) ?? [text];
+  let buf = '';
+  let bufHebrew: boolean | null = null;
 
-  for (const line of cleaned.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
+  for (const token of tokens) {
+    const word = token.trimEnd();
+    const script: boolean | null =
+      HEBREW_CHAR.test(word) ? true :
+      LATIN_CHAR.test(word) ? false :
+      null; // neutral — numbers, punctuation
 
-    const tokens = trimmed.match(/\S+\s*/g) ?? [trimmed];
-    let buf = '';
-    let bufHebrew: boolean | null = null;
+    const effective = script !== null ? script : (bufHebrew ?? false);
 
-    for (const token of tokens) {
-      const word = token.trimEnd();
-      const script: boolean | null =
-        HEBREW_CHAR.test(word) ? true :
-        LATIN_CHAR.test(word) ? false :
-        null; // neutral — numbers, punctuation
-
-      const effective = script !== null ? script : (bufHebrew ?? false);
-
-      if (bufHebrew === null) {
-        bufHebrew = effective;
-        buf = token;
-      } else if (effective === bufHebrew) {
-        buf += token;
-      } else {
-        if (buf.trim()) result.push({ text: buf.trim(), isHebrew: bufHebrew });
-        buf = token;
-        bufHebrew = effective;
-      }
+    if (bufHebrew === null) {
+      bufHebrew = effective;
+      buf = token;
+    } else if (effective === bufHebrew) {
+      buf += token;
+    } else {
+      if (buf.trim()) result.push({ text: buf.trim(), isHebrew: bufHebrew });
+      buf = token;
+      bufHebrew = effective;
     }
-
-    if (buf.trim()) result.push({ text: buf.trim(), isHebrew: bufHebrew ?? false });
   }
 
+  if (buf.trim()) result.push({ text: buf.trim(), isHebrew: bufHebrew ?? false });
   return result;
+}
+
+/**
+ * Process report text:
+ * - Replace <tag> placeholders with 2 spaces
+ * - Split on ||| to get paragraphs (new lines)
+ * - Within each paragraph, split by language direction (inline, no extra line breaks)
+ *
+ * Returns an array of paragraphs, each being an array of direction-tagged chunks.
+ */
+export function processReportText(raw: string): TextChunk[][] {
+  const cleaned = raw.replace(/<[^>]+>/g, '  ').trim();
+  const paragraphs = cleaned.split('|||').map((p) => p.trim()).filter((p) => p.length > 0);
+  return paragraphs.map(splitParagraphByLanguage);
 }
 
 /** Returns true if the string contains at least one Hebrew character. */

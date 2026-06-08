@@ -11,6 +11,7 @@ export interface UploadResponse {
   patients_found: number;
   filename: string;
   batch_id: number;
+  columns: string[];
 }
 
 export interface PatientSummary {
@@ -23,6 +24,7 @@ export interface VisitSummary {
   report_date: string;
   segment_count: number;
   has_extraction: boolean;
+  extra_data: Record<string, string>;
 }
 
 export interface Segment {
@@ -34,6 +36,7 @@ export interface ReportResponse {
   patient_id: string;
   report_date: string;
   segments: Segment[];
+  extra_data: Record<string, string>;
 }
 
 export interface ExtractionField {
@@ -47,4 +50,9 @@ export interface ExtractionValues {
   patient_id: string;
   report_date: string;
   values: Record<string, string>;
+}
+
+export interface BatchConfig {
+  sidebarCols: string[];
+  textCols: string[];
 }

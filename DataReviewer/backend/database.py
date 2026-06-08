@@ -141,6 +141,27 @@ def init_schema() -> None:
     except Exception:
         pass  # index already updated
 
+    # Migration: add extra_data column to pathology_reports (stores remaining CSV columns as JSON)
+    try:
+        conn.execute("ALTER TABLE pathology_reports ADD COLUMN extra_data VARCHAR DEFAULT '{}'")
+    except Exception:
+        pass
+
+    # Migration: add columns_json to import_batches (stores detected CSV column names as JSON)
+    try:
+        conn.execute("ALTER TABLE import_batches ADD COLUMN columns_json VARCHAR DEFAULT '[]'")
+    except Exception:
+        pass
+
+    # Per-batch display configuration (which columns appear in sidebar / as text)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS batch_config (
+            batch_id     INTEGER PRIMARY KEY,
+            sidebar_cols VARCHAR DEFAULT '[]',
+            text_cols    VARCHAR DEFAULT '[]'
+        )
+    """)
+
     # Migration: assign pre-batch records (batch_id IS NULL) to a legacy batch
     try:
         orphan_count = conn.execute(

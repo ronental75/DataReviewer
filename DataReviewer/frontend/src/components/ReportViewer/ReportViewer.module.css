@@ -36,14 +36,15 @@
   overflow: hidden;
 }
 
-.segmentLabel {
+.segmentHeader {
+  margin: 0;
+  font-size: 15px;
   font-weight: 700;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 6px 14px;
+  letter-spacing: 0.03em;
+  padding: 10px 16px 9px 14px;
   background: #f5f7ff;
   border-bottom: 1px solid #e4e8f0;
+  border-left: 4px solid currentColor;
 }
 
 .segmentText {
@@ -54,7 +55,23 @@
   word-break: break-word;
 }
 
-.textLine {
-  margin: 0;
+.paragraph {
+  margin: 0 0 6px 0;
   padding: 0;
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+.paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.rtlChunk {
+  display: inline;
+  unicode-bidi: embed;
+}
+
+.ltrChunk {
+  display: inline;
+  unicode-bidi: embed;
 }

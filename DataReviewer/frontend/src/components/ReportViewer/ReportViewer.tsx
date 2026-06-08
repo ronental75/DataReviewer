@@ -1,5 +1,6 @@
 import { useAppStore } from '../../store/appStore';
-import { splitByLanguage } from '../../utils/rtl';
+import { processReportText } from '../../utils/rtl';
+import type { TextChunk } from '../../utils/rtl';
 import styles from './ReportViewer.module.css';
 
 const LABEL_COLORS: Record<string, string> = {
@@ -10,8 +11,44 @@ const LABEL_COLORS: Record<string, string> = {
   Malignant: '#c0392b',
 };
 
+function paragraphDir(chunks: TextChunk[]): 'rtl' | 'ltr' {
+  return chunks.some((c) => c.isHebrew) ? 'rtl' : 'ltr';
+}
+
+function SegmentBlock({ label, text, color }: { label: string; text: string; color: string }) {
+  const paragraphs = processReportText(text);
+  return (
+    <div className={styles.segment}>
+      <h3 className={styles.segmentHeader} style={{ color, borderLeftColor: color }}>
+        {label}
+      </h3>
+      <div className={styles.segmentText}>
+        {paragraphs.map((chunks, pi) => {
+          const dir = paragraphDir(chunks);
+          return (
+            <p key={pi} className={styles.paragraph} dir={dir} style={{ textAlign: dir === 'rtl' ? 'right' : 'left' }}>
+              {chunks.map((chunk, ci) => (
+                <span key={ci} dir={chunk.isHebrew ? 'rtl' : 'ltr'} className={chunk.isHebrew ? styles.rtlChunk : styles.ltrChunk}>
+                  {chunk.text}
+                </span>
+              ))}
+            </p>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function ReportViewer() {
-  const { currentSegments, selectedPatientId, selectedReportDate, loadingReport } = useAppStore();
+  const {
+    currentSegments,
+    selectedPatientId,
+    selectedReportDate,
+    loadingReport,
+    batchConfig,
+    currentExtraData,
+  } = useAppStore();
 
   if (!selectedPatientId) {
     return (
@@ -25,6 +62,8 @@ export function ReportViewer() {
     return <div className={styles.placeholder}>Loading report…</div>;
   }
 
+  const textCols = batchConfig?.textCols ?? [];
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -33,29 +72,17 @@ export function ReportViewer() {
         </span>
         <span className={styles.dateLabel}>Visit: {selectedReportDate}</span>
       </div>
+
       {currentSegments.map((seg, i) => {
         const label = seg.segment_label ?? 'Note';
         const color = LABEL_COLORS[label] ?? '#444';
-        const chunks = splitByLanguage(seg.text_content);
-        return (
-          <div key={i} className={styles.segment}>
-            <div className={styles.segmentLabel} style={{ color }}>
-              {label}
-            </div>
-            <div className={styles.segmentText}>
-              {chunks.map((chunk, j) => (
-                <p
-                  key={j}
-                  dir={chunk.isHebrew ? 'rtl' : 'ltr'}
-                  className={styles.textLine}
-                  style={{ textAlign: chunk.isHebrew ? 'right' : 'left' }}
-                >
-                  {chunk.text}
-                </p>
-              ))}
-            </div>
-          </div>
-        );
+        return <SegmentBlock key={i} label={label} text={seg.text_content} color={color} />;
+      })}
+
+      {textCols.map((col) => {
+        const val = currentExtraData?.[col];
+        if (!val) return null;
+        return <SegmentBlock key={col} label={col} text={val} color="#555" />;
       })}
     </div>
   );

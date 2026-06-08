@@ -8,6 +8,7 @@ class UploadResponse(BaseModel):
     patients_found: int
     filename: str
     batch_id: int
+    columns: list[str] = []
 
 
 class ImportBatch(BaseModel):
@@ -27,6 +28,7 @@ class VisitSummary(BaseModel):
     report_date: str
     segment_count: int
     has_extraction: bool
+    extra_data: dict = {}
 
 
 class Segment(BaseModel):
@@ -38,6 +40,7 @@ class ReportResponse(BaseModel):
     patient_id: str
     report_date: str
     segments: list[Segment]
+    extra_data: dict = {}
 
 
 class ExtractionField(BaseModel):
@@ -65,3 +68,8 @@ class ExtractionValues(BaseModel):
 
 class SaveExtractionRequest(BaseModel):
     values: dict[str, str]
+
+
+class BatchConfig(BaseModel):
+    sidebar_cols: list[str] = []
+    text_cols: list[str] = []

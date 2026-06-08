@@ -2,12 +2,14 @@
 Patients router — navigation endpoints.
 
 GET /api/patients              — distinct patients ordered by most recent visit.
-GET /api/patients/{id}/visits  — visits for one patient with extraction status.
+GET /api/patients/{id}/visits  — visits for one patient with extraction status
+                                 and extra_data (first CSV row's extra columns).
 
 Both endpoints accept an optional ?batch_id=N query parameter to restrict
 results to a single import batch.
 """
 
+import json
 from typing import Optional
 from fastapi import APIRouter, Query
 from database import get_db
@@ -54,7 +56,8 @@ def list_visits(patient_id: str, batch_id: Optional[int] = Query(default=None)):
                 SELECT
                     pr.report_date,
                     COUNT(*)          AS segment_count,
-                    COUNT(ed.id) > 0  AS has_extraction
+                    COUNT(ed.id) > 0  AS has_extraction,
+                    ANY_VALUE(pr.extra_data) AS extra_data
                 FROM pathology_reports pr
                 LEFT JOIN extracted_data ed
                     ON ed.patient_id = pr.patient_id AND ed.report_date = pr.report_date
@@ -67,7 +70,8 @@ def list_visits(patient_id: str, batch_id: Optional[int] = Query(default=None)):
                 SELECT
                     pr.report_date,
                     COUNT(*)          AS segment_count,
-                    COUNT(ed.id) > 0  AS has_extraction
+                    COUNT(ed.id) > 0  AS has_extraction,
+                    ANY_VALUE(pr.extra_data) AS extra_data
                 FROM pathology_reports pr
                 LEFT JOIN extracted_data ed
                     ON ed.patient_id = pr.patient_id AND ed.report_date = pr.report_date
@@ -75,7 +79,17 @@ def list_visits(patient_id: str, batch_id: Optional[int] = Query(default=None)):
                 GROUP BY pr.report_date
                 ORDER BY pr.report_date DESC
             """, [patient_id]).fetchall()
-    return [
-        VisitSummary(report_date=r[0], segment_count=r[1], has_extraction=bool(r[2]))
-        for r in rows
-    ]
+
+    result = []
+    for r in rows:
+        try:
+            extra = json.loads(r[3]) if r[3] else {}
+        except Exception:
+            extra = {}
+        result.append(VisitSummary(
+            report_date=r[0],
+            segment_count=r[1],
+            has_extraction=bool(r[2]),
+            extra_data=extra,
+        ))
+    return result
